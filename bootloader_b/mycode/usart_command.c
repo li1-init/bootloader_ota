@@ -10,6 +10,86 @@
 #include <stdarg.h>
 #include "struct_init.h"
 #include "stdint.h"
+#include "esp_at.h"
+
+extern uint8_t mqtt_line_ready ;  // 1代表mqtt_line_buf已经存好完整一行文本
+extern uint8_t g_mqtt_msg_ready ; // 1：代表成功解析出来一条MQTT上报消息
+
+extern  char mqtt_line_buf[MQTT_LINE_BUF_LEN];
+
+extern MqttSubRecv_t g_mqtt_sub_msg;
+extern uint8_t g_mqtt_msg_ready;
+
+/**
+ * @brief 解析 +MQTTSUBRECV:0,"stm32/cmd",6,123456
+ */
+void mqtt_parse_sub_recv(char *line)
+{
+    g_mqtt_msg_ready = 0;
+
+    // 判断是不是MQTT上报行，如果不是直接返回
+    if (strstr(line, "+MQTTSUBRECV:") == NULL)
+    {
+        return;
+    }
+
+    // 跳过 "+MQTTSUBRECV:"
+    char *p = strstr(line, ":") + 1;
+
+    // 跳过client编号 0,
+    p = strchr(p, ',') + 1;
+    if (p == NULL)
+        return;
+
+    p++; // 跳过第一个双引号
+    char *topic_end = strchr(p, '"');
+    if (topic_end == NULL)
+        return;
+
+    // 计算主题长度，拷贝，不修改原line缓冲区
+    size_t topic_len = topic_end - p;
+    strncpy(g_mqtt_sub_msg.topic, p, sizeof(g_mqtt_sub_msg.topic) - 1);
+    g_mqtt_sub_msg.topic[topic_len] = '\0';
+
+    p = topic_end + 1;
+
+    // 跳过 ,6,
+    p = strchr(p, ',') + 1;
+    if (p == NULL)
+        return;
+    p = strchr(p, ',') + 1;
+    if (p == NULL)
+        return;
+
+    // 复制payload，清除\r\n回车换行
+    strncpy(g_mqtt_sub_msg.payload, p, sizeof(g_mqtt_sub_msg.payload) - 1);
+    g_mqtt_sub_msg.payload[strcspn(g_mqtt_sub_msg.payload, "\r\n")] = '\0';
+
+    // 标记：解析成功，g_mqtt_sub_msg内topic、payload数据有效
+    g_mqtt_msg_ready = 1;
+}
+
+// 只提取0‑9数字，返回uint8_t；无有效数字返回 0xFF
+uint8_t get_only_number(uint8_t *buf, uint16_t len)
+{
+	uint8_t num_1 = 0;
+	unsigned char have_digit = 0;
+	unsigned int i;
+	for (i = 0; i < len; i++)
+	{
+		if (buf[i] >= '0' && buf[i] <= '9')
+		{
+			num_1 = num_1 * 10 + (buf[i] - '0');
+			have_digit = 1;
+		}
+	}
+	if (have_digit)
+	{
+		return num_1;
+	}
+	// 没有找到任何数字，返回0xFF作为无效标记
+	return 0xFF;
+}
 
 void tell(const char *fmt, ...)
 {
@@ -36,6 +116,7 @@ void uasrt_command_suf(void)
 	u1_printf("[6]使用外部Flash内程序\r\n");
 	u1_printf("[7]重启\r\n");
 	u1_printf("[8]跳转进入A区\r\n");
+	u1_printf("[9]远程接收消息\r\n");
 	u1_printf("/* -------------------------------------- */\r\n");
 }
 
@@ -484,31 +565,66 @@ void menu8(void)
 
 void menu9(void)
 {
+	tell("远程接收消息开始，输入0结束");
+
+	/* ------------------- 数据弹出移动 ------------------- */
+	U0CB.URxDataOUT++;
+	if (U0CB.URxDataOUT == U0CB.URxDataEND)
+	{
+		U0CB.URxDataOUT = &U0CB.URxDataPtr[0];
+	}
+
+	while(1)
+	{
+		if (mqtt_line_ready == 1)
+		{
+			mqtt_parse_sub_recv(mqtt_line_buf);
+			mqtt_line_ready = 0;
+
+			if (g_mqtt_msg_ready == 1)
+			{
+				g_mqtt_msg_ready = 0;
+				tell("收到消息:%s", g_mqtt_sub_msg.payload);
+			}
+		}
+
+		if (U0CB.URxDataOUT != U0CB.URxDataIN)
+		{
+			uint16_t datalen = U0CB.URxDataOUT->end - U0CB.URxDataOUT->start + 1;
+			uint8_t *data = U0CB.URxDataOUT->start;
+
+			uint8_t menu_val1 = get_only_number(data, datalen);
+			
+			switch (menu_val1)
+			{
+			case 0:
+				tell("退出");
+				uasrt_command_suf();
+				return;
+
+			default:
+				tell("输入的指令无效，请重新输入");
+				
+				/* ------------------- 数据弹出移动 ------------------- */
+				U0CB.URxDataOUT++;
+				if (U0CB.URxDataOUT == U0CB.URxDataEND)
+				{
+					U0CB.URxDataOUT = &U0CB.URxDataPtr[0];
+				}
+
+				break;
+			}
+		}
+	}
+}
+
+void menu_error(void)
+{
 	tell("输入的指令无效，请重新输入");
 	uasrt_command_suf();
 }
 
-// 只提取0‑9数字，返回uint8_t；无有效数字返回 0xFF
-uint8_t get_only_number(uint8_t *buf, uint16_t len)
-{
-	uint8_t num_1 = 0;
-	unsigned char have_digit = 0;
-	unsigned int i;
-	for (i = 0; i < len; i++)
-	{
-		if (buf[i] >= '0' && buf[i] <= '9')
-		{
-			num_1 = num_1 * 10 + (buf[i] - '0');
-			have_digit = 1;
-		}
-	}
-	if (have_digit)
-	{
-		return num_1;
-	}
-	// 没有找到任何数字，返回0xFF作为无效标记
-	return 0xFF;
-}
+
 
 /* ------------------- bootloader菜单功能选择函数 ------------------- */
 void bootloader_event(uint8_t *data, uint16_t datalen)
@@ -545,9 +661,12 @@ void bootloader_event(uint8_t *data, uint16_t datalen)
 	case 8:
 		menu8();
 		break;
+	case 9:
+		menu9();
+		break;
 	default:
 		// 没有数字 / 不是1‑7，进入menu8
-		menu9();
+		menu_error();
 		break;
 	}
 }

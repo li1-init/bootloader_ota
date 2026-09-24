@@ -6,6 +6,8 @@
 
 
 /* ------------------ 函数声明 ------------------- */
+
+void tell(const char *fmt, ...);
 void uasrt_command_suf(void);
 
 uint8_t uasrt_command(uint32_t time);
@@ -34,6 +36,10 @@ void menu6(void);
 void menu7(void);
 
 void menu8(void);
+
+void menu9(void);
+
+void menu_error(void);
 
 uint16_t Xmodem_CRC16(uint8_t *data, uint16_t datalen);
 

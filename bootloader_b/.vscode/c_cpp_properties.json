@@ -3,18 +3,19 @@
         {
             "name": "default",
             "includePath": [
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\std_periph_driver\\inc",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\user",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\my_lib",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\my_lib\\font",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\my_lib\\font\\.h",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\mycode",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\mydrive",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\Hardware",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\std_periph_driver\\inc",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\user",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\my_lib",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\my_lib\\font",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\my_lib\\font\\.h",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\mycode",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\mydrive",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\Hardware",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\esp-at",
                 "D:\\keil\\coure\\ARM\\ARMCC\\include",
                 "D:\\keil\\coure\\ARM\\ARMCC\\include\\rw",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\startup",
-                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\6.usart_command111\\std_periph_driver\\src"
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\startup",
+                "d:\\MCUlearn\\32standard_library\\null_freertos\\ota_bootloader\\bootloader_b\\std_periph_driver\\src"
             ],
             "defines": [
                 "__CC_ARM",

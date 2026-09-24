@@ -340,7 +340,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\std_periph_driver\inc;.\user;.\my_lib;.\my_lib\font;.\my_lib\font\.h;.\mycode;.\mydrive;.\Hardware</IncludePath>
+              <IncludePath>.\std_periph_driver\inc;.\user;.\my_lib;.\my_lib\font;.\my_lib\font\.h;.\mycode;.\mydrive;.\Hardware;.\esp-at</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -813,6 +813,51 @@
               <FileName>MySPI.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\mydrive\MySPI.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>esp_at</GroupName>
+          <Files>
+            <File>
+              <FileName>esp_at.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\esp-at\esp_at.c</FilePath>
+            </File>
+            <File>
+              <FileName>esp_at.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\esp-at\esp_at.h</FilePath>
+            </File>
+            <File>
+              <FileName>esp_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\esp-at\esp_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>esp_usart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\esp-at\esp_usart.h</FilePath>
+            </File>
+            <File>
+              <FileName>esp_wifi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\esp-at\esp_wifi.c</FilePath>
+            </File>
+            <File>
+              <FileName>esp_mqtt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\esp-at\esp_mqtt.c</FilePath>
+            </File>
+            <File>
+              <FileName>esp_wifi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\esp-at\esp_wifi.h</FilePath>
+            </File>
+            <File>
+              <FileName>esp_mqtt.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\esp-at\esp_mqtt.h</FilePath>
             </File>
           </Files>
         </Group>

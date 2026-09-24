@@ -6,6 +6,10 @@
 #include "MySPI.h"
 #include "bootloader.h"
 #include "usart_command.h"
+#include "esp_at.h"
+#include "esp_wifi.h"
+#include "esp_mqtt.h"
+
 
 /* ------------------- printf重定向 ------------------- */
 int fputc(int ch, FILE *f)
@@ -29,6 +33,10 @@ int main(void)
 {
 
     all_init();
+
+    wifi_int();
+
+    mqtt_connect();
 
     uasrt_command_suf();
 

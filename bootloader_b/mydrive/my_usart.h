@@ -8,7 +8,7 @@
 #include "string.h"
 #include "delay.h"
 
-
+void u1_printf(const char *fmt, ...);
 
 void all_init(void);
 /**

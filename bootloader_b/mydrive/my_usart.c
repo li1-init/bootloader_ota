@@ -3,6 +3,7 @@
 #include "W25Q64.h"
 #include "MySPI.h"
 #include "struct_init.h"
+#include "esp_usart.h"
 
 /***************  pa9 pa10 电脑<-->stm32f10x    *****************/
 /**
@@ -205,177 +206,178 @@ void u1_printf(const char *fmt, ...)
     USART_ClearFlag(USART1, USART_FLAG_TC);
 }
 
-/***************  pa2 pa3 stm32<-->esp32    *****************/
-/**
- * @brief 串口2接收缓冲区
- *
- */
-uint8_t usart2_rx_buf[usart_rx_buf_size];
-usart_data U2CB;
+///***************  pa2 pa3 stm32<-->esp32    *****************/
+///**
+// * @brief 串口2接收缓冲区
+// *
+// */
+//uint8_t usart2_rx_buf[usart_rx_buf_size];
+//usart_data U2CB;
 
-void U2Rx_PtrInit(void)
-{
-    U2CB.URxDataIN = &U2CB.URxDataPtr[0];  // 与DMA+空闲中断写入相关
-    U2CB.URxDataOUT = &U2CB.URxDataPtr[0]; // 与读取相关
-    U2CB.URxDataEND = &U2CB.URxDataPtr[num - 1];
-    U2CB.URxDataIN->start = usart2_rx_buf;
-    U2CB.URxCounter = 0;
-}
+//void U2Rx_PtrInit(void)
+//{
+//    U2CB.URxDataIN = &U2CB.URxDataPtr[0];  // 与DMA+空闲中断写入相关
+//    U2CB.URxDataOUT = &U2CB.URxDataPtr[0]; // 与读取相关
+//    U2CB.URxDataEND = &U2CB.URxDataPtr[num - 1];
+//    U2CB.URxDataIN->start = usart2_rx_buf;
+//    U2CB.URxCounter = 0;
+//}
 
-void my_usart2_init(void)
-{
-    /***************  pa2 pa3 stm32<-->esp32    *****************/
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
-    USART_InitTypeDef usart_struct = {0};
-    usart_struct.USART_BaudRate = 115200;
-    usart_struct.USART_HardwareFlowControl = DISABLE;
-    usart_struct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-    usart_struct.USART_Parity = USART_Parity_No;
-    usart_struct.USART_StopBits = USART_StopBits_1;
-    usart_struct.USART_WordLength = USART_WordLength_8b;
-    USART_Init(USART2, &usart_struct);
+//void my_usart2_init(void)
+//{
+//    /***************  pa2 pa3 stm32<-->esp32    *****************/
+//    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+//    USART_InitTypeDef usart_struct = {0};
+//    usart_struct.USART_BaudRate = 115200;
+//    usart_struct.USART_HardwareFlowControl = DISABLE;
+//    usart_struct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+//    usart_struct.USART_Parity = USART_Parity_No;
+//    usart_struct.USART_StopBits = USART_StopBits_1;
+//    usart_struct.USART_WordLength = USART_WordLength_8b;
+//    USART_Init(USART2, &usart_struct);
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-    GPIO_InitTypeDef DPA = {0};
-    DPA.GPIO_Pin = GPIO_Pin_2;
-    DPA.GPIO_Mode = GPIO_Mode_AF_PP;
-    DPA.GPIO_Speed = GPIO_Speed_10MHz;
-    GPIO_Init(GPIOA, &DPA);
+//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+//    GPIO_InitTypeDef DPA = {0};
+//    DPA.GPIO_Pin = GPIO_Pin_2;
+//    DPA.GPIO_Mode = GPIO_Mode_AF_PP;
+//    DPA.GPIO_Speed = GPIO_Speed_10MHz;
+//    GPIO_Init(GPIOA, &DPA);
 
-    DPA.GPIO_Mode = GPIO_Mode_IPU;
-    DPA.GPIO_Pin = GPIO_Pin_3;
-    GPIO_Init(GPIOA, &DPA);
+//    DPA.GPIO_Mode = GPIO_Mode_IPU;
+//    DPA.GPIO_Pin = GPIO_Pin_3;
+//    GPIO_Init(GPIOA, &DPA);
 
-    //=====================【新增开始：DMA+空闲中断】=====================
-    // 1.开启DMA1时钟，DMA1挂载在AHB总线
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
-    // 2.定义DMA初始化结构体
-    DMA_InitTypeDef dma_rx_struct = {0};
-    // 外设地址：USART2的数据寄存器地址
-    dma_rx_struct.DMA_PeripheralBaseAddr = (uint32_t)&USART2->DR;
-    // 内存目标地址：usart2接收缓冲区
-    dma_rx_struct.DMA_MemoryBaseAddr = (uint32_t)usart2_rx_buf;
-    // 传输方向：外设 → 内存
-    dma_rx_struct.DMA_DIR = DMA_DIR_PeripheralSRC;
-    // DMA缓存大小
-    dma_rx_struct.DMA_BufferSize = usart2_rx_buf_max + 1;
-    // 外设地址：不递增
-    dma_rx_struct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-    // 内存地址开启自增
-    dma_rx_struct.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    // 外设数据宽度：1字节
-    dma_rx_struct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-    // 内存数据宽度：1字节
-    dma_rx_struct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-    // DMA模式：普通模式
-    dma_rx_struct.DMA_Mode = DMA_Mode_Normal;
-    // 通道优先级：中等
-    dma_rx_struct.DMA_Priority = DMA_Priority_Medium;
-    // 不开启内存到内存
-    dma_rx_struct.DMA_M2M = DMA_M2M_Disable;
+//    //=====================【新增开始：DMA+空闲中断】=====================
+//    // 1.开启DMA1时钟，DMA1挂载在AHB总线
+//    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+//    // 2.定义DMA初始化结构体
+//    DMA_InitTypeDef dma_rx_struct = {0};
+//    // 外设地址：USART2的数据寄存器地址
+//    dma_rx_struct.DMA_PeripheralBaseAddr = (uint32_t)&USART2->DR;
+//    // 内存目标地址：usart2接收缓冲区
+//    dma_rx_struct.DMA_MemoryBaseAddr = (uint32_t)usart2_rx_buf;
+//    // 传输方向：外设 → 内存
+//    dma_rx_struct.DMA_DIR = DMA_DIR_PeripheralSRC;
+//    // DMA缓存大小
+//    dma_rx_struct.DMA_BufferSize = usart2_rx_buf_max + 1;
+//    // 外设地址：不递增
+//    dma_rx_struct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+//    // 内存地址开启自增
+//    dma_rx_struct.DMA_MemoryInc = DMA_MemoryInc_Enable;
+//    // 外设数据宽度：1字节
+//    dma_rx_struct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+//    // 内存数据宽度：1字节
+//    dma_rx_struct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+//    // DMA模式：普通模式
+//    dma_rx_struct.DMA_Mode = DMA_Mode_Normal;
+//    // 通道优先级：中等
+//    dma_rx_struct.DMA_Priority = DMA_Priority_Medium;
+//    // 不开启内存到内存
+//    dma_rx_struct.DMA_M2M = DMA_M2M_Disable;
 
-    // USART2_RX 使用 DMA1_Channel6 !!!
-    DMA_Init(DMA1_Channel6, &dma_rx_struct);
+//    // USART2_RX 使用 DMA1_Channel6 !!!
+//    DMA_Init(DMA1_Channel6, &dma_rx_struct);
 
-    // 串口接收使用DMA模式
-    USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);
-    // 使能DMA1通道6
-    DMA_Cmd(DMA1_Channel6, ENABLE);
+//    // 串口接收使用DMA模式
+//    USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);
+//    // 使能DMA1通道6
+//    DMA_Cmd(DMA1_Channel6, ENABLE);
 
-    // -----------串口空闲中断配置 IDLE-----------
-    USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
-    // NVIC中断分组建议main里只配置一次
-    // NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+//    // -----------串口空闲中断配置 IDLE-----------
+//    USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
+//    // NVIC中断分组建议main里只配置一次
+//    // NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 
-    NVIC_InitTypeDef nvic_struct = {0};
-    nvic_struct.NVIC_IRQChannel = USART2_IRQn;
-    nvic_struct.NVIC_IRQChannelPreemptionPriority = 2;
-    nvic_struct.NVIC_IRQChannelSubPriority = 1;
-    nvic_struct.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&nvic_struct);
-    //=====================【新增结束】=====================
+//    NVIC_InitTypeDef nvic_struct = {0};
+//    nvic_struct.NVIC_IRQChannel = USART2_IRQn;
+//    nvic_struct.NVIC_IRQChannelPreemptionPriority = 2;
+//    nvic_struct.NVIC_IRQChannelSubPriority = 1;
+//    nvic_struct.NVIC_IRQChannelCmd = ENABLE;
+//    NVIC_Init(&nvic_struct);
+//    //=====================【新增结束】=====================
 
-    U2Rx_PtrInit();
-    USART_Cmd(USART2, ENABLE);
-}
+//    U2Rx_PtrInit();
+//    USART_Cmd(USART2, ENABLE);
+//}
 
-void USART2_IRQHandler(void)
-{
-    if (USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
-    {
-        //======== STM32F1清除IDLE标志，必须读SR再读DR ========
-        (void)USART_GetFlagStatus(USART2, USART_FLAG_IDLE);
-        (void)USART_ReceiveData(USART2);
+//void USART2_IRQHandler(void)
+//{
+//    if (USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
+//    {
+//        //======== STM32F1清除IDLE标志，必须读SR再读DR ========
+//        (void)USART_GetFlagStatus(USART2, USART_FLAG_IDLE);
+//        (void)USART_ReceiveData(USART2);
 
-        // USART2 RX DMA1_Channel6
-        uint16_t remain = DMA_GetCurrDataCounter(DMA1_Channel6);
-        uint16_t recv_len = (usart2_rx_buf_max + 1) - remain;
+//        // USART2 RX DMA1_Channel6
+//        uint16_t remain = DMA_GetCurrDataCounter(DMA1_Channel6);
+//        uint16_t recv_len = (usart2_rx_buf_max + 1) - remain;
 
-        if (recv_len == 0)
-        {
-            DMA_Cmd(DMA1_Channel6, DISABLE);
-            DMA_SetCurrDataCounter(DMA1_Channel6, usart2_rx_buf_max + 1);
-            DMA1_Channel6->CMAR = (uint32_t)U2CB.URxDataIN->start;
-            DMA_Cmd(DMA1_Channel6, ENABLE);
-            return;
-        }
+//        if (recv_len == 0)
+//        {
+//            DMA_Cmd(DMA1_Channel6, DISABLE);
+//            DMA_SetCurrDataCounter(DMA1_Channel6, usart2_rx_buf_max + 1);
+//            DMA1_Channel6->CMAR = (uint32_t)U2CB.URxDataIN->start;
+//            DMA_Cmd(DMA1_Channel6, ENABLE);
+//            return;
+//        }
 
-        U2CB.URxCounter = U2CB.URxCounter + recv_len;
-        U2CB.URxDataIN->end = &usart2_rx_buf[U2CB.URxCounter - 1];
-        U2CB.URxDataIN++;
+//        U2CB.URxCounter = U2CB.URxCounter + recv_len;
+//        U2CB.URxDataIN->end = &usart2_rx_buf[U2CB.URxCounter - 1];
+//        U2CB.URxDataIN++;
 
-        if (U2CB.URxDataIN == U2CB.URxDataEND)
-        {
-            U2CB.URxDataIN = &U2CB.URxDataPtr[0];
-        }
+//        if (U2CB.URxDataIN == U2CB.URxDataEND)
+//        {
+//            U2CB.URxDataIN = &U2CB.URxDataPtr[0];
+//        }
 
-        if (usart_rx_buf_size - U2CB.URxCounter >= usart_rx_buf_max)
-        {
-            U2CB.URxDataIN->start = &usart2_rx_buf[U2CB.URxCounter];
-        }
-        else
-        {
-            U2CB.URxDataIN->start = usart2_rx_buf;
-            U2CB.URxCounter = 0;
-        }
+//        if (usart_rx_buf_size - U2CB.URxCounter >= usart_rx_buf_max)
+//        {
+//            U2CB.URxDataIN->start = &usart2_rx_buf[U2CB.URxCounter];
+//        }
+//        else
+//        {
+//            U2CB.URxDataIN->start = usart2_rx_buf;
+//            U2CB.URxCounter = 0;
+//        }
 
-        DMA_Cmd(DMA1_Channel6, DISABLE);
-        DMA_SetCurrDataCounter(DMA1_Channel6, usart2_rx_buf_max + 1);
-        DMA1_Channel6->CMAR = (uint32_t)U2CB.URxDataIN->start;
-        DMA_Cmd(DMA1_Channel6, ENABLE);
-    }
-}
+//        DMA_Cmd(DMA1_Channel6, DISABLE);
+//        DMA_SetCurrDataCounter(DMA1_Channel6, usart2_rx_buf_max + 1);
+//        DMA1_Channel6->CMAR = (uint32_t)U2CB.URxDataIN->start;
+//        DMA_Cmd(DMA1_Channel6, ENABLE);
+//    }
+//}
 
-uint8_t usart2_tx_buf[usart_tx_buf_size];
-/**
- * @brief 串口2打印函数
- *
- * @param fmt
- * @param ...
- */
-void u2_printf(const char *fmt, ...)
-{
-    uint16_t i = 0;
-    va_list listdata;
-    va_start(listdata, fmt);
-    vsprintf((char *)usart2_tx_buf, fmt, listdata);
-    va_end(listdata);
-    for (i = 0; i < strlen((char *)usart2_tx_buf); i++)
-    {
-        while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
-            ;
-        USART_SendData(USART2, usart2_tx_buf[i]);
-    }
-    while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
-        ;
-    USART_ClearFlag(USART2, USART_FLAG_TC);
-}
+//uint8_t usart2_tx_buf[usart_tx_buf_size];
+///**
+// * @brief 串口2打印函数
+// *
+// * @param fmt
+// * @param ...
+// */
+//void u2_printf(const char *fmt, ...)
+//{
+//    uint16_t i = 0;
+//    va_list listdata;
+//    va_start(listdata, fmt);
+//    vsprintf((char *)usart2_tx_buf, fmt, listdata);
+//    va_end(listdata);
+//    for (i = 0; i < strlen((char *)usart2_tx_buf); i++)
+//    {
+//        while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
+//            ;
+//        USART_SendData(USART2, usart2_tx_buf[i]);
+//    }
+//    while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+//        ;
+//    USART_ClearFlag(USART2, USART_FLAG_TC);
+//}
 
 void all_init(void)
 {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
     my_usart1_init();
-    my_usart2_init();
+    esp_usart_init();
+//    my_usart2_init();
     Delay_Init();
     W25Q64_Init();
     tim3_init();
