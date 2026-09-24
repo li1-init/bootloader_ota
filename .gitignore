@@ -1,0 +1,28 @@
+# Keil MDK 编译垃圾文件
+*.uvgui*
+*.uvopt
+*.bak
+*.dep
+*.crf
+*.o
+*.d
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.lnp
+*.sct
+*.lst
+*.tra
+*.htm
+*.build_log.htm
+Debug/
+Release/
+Listings/
+Objects/
+
+# 系统杂项
+.DS_Store
+Thumbs.db
+*.log
