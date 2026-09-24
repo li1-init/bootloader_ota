@@ -34,9 +34,9 @@ int main(void)
 
     all_init();
 
-    wifi_int();
+    //wifi_int();
 
-    mqtt_connect();
+    //mqtt_connect();
 
     uasrt_command_suf();
 

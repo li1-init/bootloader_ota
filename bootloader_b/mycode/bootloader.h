@@ -68,6 +68,17 @@ typedef __packed struct
 #define w25q_ota_info_addr       0x000000u       //ota标志信息结构体存放地址
 #define w25q_fw_store_start      0x010000u       //固件临时缓存起始地址(全部下载到这里)
 
+#define fw1_addr 0x010000u
+#define fw2_addr 0x020000u
+#define fw3_addr 0x030000u
+#define fw4_addr 0x040000u
+#define fw5_addr 0x050000u
+#define fw6_addr 0x060000u
+#define fw7_addr 0x070000u
+#define fw8_addr 0x080000u
+#define fw9_addr 0x090000u
+#define fw_one_size 0x10000u
+
 /* ------------------- 标志位掩码定义(位标志) ------------------- */
 #define update_a_flag             (1u << 0)      //bit0：标记升级a分区
 
@@ -82,7 +93,8 @@ typedef struct
     uint32_t fw_total_len;          //固件总字节长度
     uint32_t fw_crc32;              //固件校验值
     uint32_t block_nb;              //已经接收完成的分片包数量
-    char version[32];               //固件版本号，字符串
+    char version[32];               // 固件版本号，字符串
+    uint32_t fw_len[9];             // 9个外部Flash固件槽的长度             //固件版本号，字符串
 } __attribute__((packed)) ota_info_typedef;
 
 #define ota_info_typedef_size sizeof(ota_info_typedef)

@@ -20,6 +20,8 @@ void STM32_EraseFlash(uint32_t start_page, uint32_t page_cnt);
 
 void stm32_write_flash(uint32_t addr, uint8_t *pbuf, uint16_t len);
 
+uint8_t copy_w25q_to_app(uint8_t fw_no, uint32_t fw_len);
+void w25q_erase_64k_block(uint32_t base_addr);
 
 void menu1(void);
 
